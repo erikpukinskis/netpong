@@ -10,7 +10,7 @@ export function Table() {
       if (!scene) return;
       // const geometry = new THREE.SphereGeometry(5, 32, 32);
       // scene.add(sphere);
-      const geometry = new THREE.BoxGeometry(1, 1, 1);
+      const geometry = new THREE.BoxGeometry(.2, 1, 1);
       const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
       const cube = new THREE.Mesh(geometry, material);
 
@@ -18,8 +18,8 @@ export function Table() {
 
       const animate = function () {
         requestAnimationFrame(animate);
-        cube.rotation.x += 0.01;
-        cube.rotation.y += 0.01;
+        // cube.rotation.x += 0.01;
+        // cube.rotation.y += 0.01;
         render();
       };
       animate();
