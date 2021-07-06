@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useRef } from "react";
+import React, { useEffect, useState, useContext, useRef, useCallback } from "react";
 import * as THREE from "three";
 
 const SceneContext = React.createContext();
@@ -6,7 +6,14 @@ const SceneContext = React.createContext();
 export function SceneProvider({ children }) {
   const [scene, setScene] = useState();
   const [renderer, setRenderer] = useState();
+  const [camera, setCamera] = useState()
   const canvasRef = useRef();
+  const dirtyCount = useRef(0);
+
+  const render = useCallback(function requestRender() {
+    if (!renderer) return
+    renderer.render(scene, camera);
+  }, [renderer])
 
   useEffect(function createThreeJsScene() {
     if (!canvasRef.current) return
@@ -19,33 +26,22 @@ export function SceneProvider({ children }) {
       0.1,
       1000
     );
+    setCamera(camera)
     var renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current
     });
     setRenderer(renderer);
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const cube = new THREE.Mesh(geometry, material);
-
-    scene.add(cube);
-
     camera.position.z = 5;
 
-    const animate = function () {
-      requestAnimationFrame(animate);
-      cube.rotation.x += 0.01;
-      cube.rotation.y += 0.01;
-      renderer.render(scene, camera);
-    };
-    animate();
+    renderer.render(scene, camera);
   }, [canvasRef]);
 
   return (
-    <SceneContext.Provider value={scene}>
+    <SceneContext.Provider value={{ scene, render }}>
       <canvas ref={canvasRef} />
-      {children}
+      {canvasRef.current && children}
     </SceneContext.Provider>
   );
 }
