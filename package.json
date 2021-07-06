@@ -1,10 +1,16 @@
 {
+  "description": "multiplayer browser-based implementation of Pong with deterministic netcode",
   "scripts": {
     "start": "snowpack dev",
     "build": "snowpack build",
-    "test": "echo \"This template does not include a test runner by default.\" && exit 1"
   },
   "devDependencies": {
+    "prettier": "^2.3.2",
     "snowpack": "^3.3.7"
+  },
+  "dependencies": {
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "three": "^0.130.1"
   }
 }
