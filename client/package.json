@@ -1,10 +1,11 @@
 {
   "description": "multiplayer browser-based implementation of Pong with deterministic netcode",
   "scripts": {
-    "start": "snowpack dev",
-    "build": "snowpack build",
+    "start": "snowpack dev --polyfill-node",
+    "build": "snowpack build"
   },
   "devDependencies": {
+    "http2-proxy": "^5.0.53",
     "prettier": "^2.3.2",
     "snowpack": "^3.3.7"
   },
