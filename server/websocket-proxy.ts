@@ -5,6 +5,7 @@ import {
 } from "https://deno.land/std@0.100.0/ws/mod.ts";
 import { ServerRequest } from "https://deno.land/std@0.100.0/http/server.ts";
 import { v4 } from "https://deno.land/std@0.100.0/uuid/mod.ts";
+import * as Colors from "https://deno.land/std@0.100.0/fmt/colors.ts";
 
 function getCallId(id: string, otherId: string) {
   if (id < otherId) {
@@ -110,9 +111,11 @@ function parseProxyProtocol(protocol: string | null) {
   return { callerId, listenerId };
 }
 
-async function openConnection(request: ServerRequest, clients: SocketStore) {
-  console.log("connecting new socket");
+function loggable(uuid: string, shorten = false) {
+  return Colors.gray(uuid.split("-")[0].slice(0, shorten ? 4 : uuid.length));
+}
 
+async function openConnection(request: ServerRequest, clients: SocketStore) {
   const { conn, r: bufReader, w: bufWriter, headers } = request;
 
   const socket = await acceptWebSocket({
@@ -128,11 +131,17 @@ async function openConnection(request: ServerRequest, clients: SocketStore) {
 
   const callId = clients.startCall(callerId, listenerId, socket);
 
-  console.log(`${callerId} is calling ${listenerId} on call ${callId}`);
+  const caller = loggable(callerId, true);
+  const listener = loggable(listenerId, true);
+  console.log(
+    `${Colors.cyan("  [open]")} ${loggable(callerId)} is calling ${loggable(
+      listenerId
+    )}`
+  );
 
   for await (const event of socket) {
     if (isWebSocketCloseEvent(event)) {
-      console.log(`${callerId} hung up on ${listenerId}`);
+      console.log(`${Colors.cyan("  [bye]")} ${caller} hung up on ${listener}`);
       clients.endCall(callId, callerId);
       break;
     }
@@ -141,14 +150,20 @@ async function openConnection(request: ServerRequest, clients: SocketStore) {
 
     if (!listenerSocket) {
       throw new Error(
-        `Listener ${listenerId} is not currently listening to call ${callId}`
+        `Listener ${listener} is not currently listening to call ${callId}`
       );
     }
     console.log(
-      `Caller ${callerId} is sending ${event} on call ${callId} to listener ${listenerId}`
+      `${Colors.cyan("  [message]")} ${caller} is sending ${loggable(
+        `"${event}"`
+      )} to listener ${listener}`
     );
     listenerSocket.send(event.toString());
   }
 
-  console.log(`Done with ${callerId} connection`);
+  console.log(
+    `${Colors.cyan(
+      "  [close]"
+    )} Done with ${caller}'s connection to ${listener}`
+  );
 }
