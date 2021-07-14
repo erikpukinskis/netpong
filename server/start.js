@@ -1,9 +1,5 @@
 import { serve } from "https://deno.land/std@0.100.0/http/server.ts";
-import {
-  SocketStore,
-  proxyWebSockets,
-  ProxyProtocol,
-} from "./websocket-proxy.ts";
+import { SocketStore, proxyWebSockets } from "./websocket-proxy.ts";
 
 const server = serve({ port: 8000 });
 const clients = new SocketStore();
