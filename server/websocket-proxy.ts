@@ -10,6 +10,7 @@ import {
 } from "../lib/websocket-protocols.ts";
 import { SocketStore } from "./socket-store.ts";
 export { SocketStore } from "./socket-store.ts";
+import { log, datum } from "./log.ts";
 
 export function proxyWebSockets(request: ServerRequest, clients: SocketStore) {
   if (request.headers.get("upgrade") !== "websocket") return;
@@ -61,23 +62,29 @@ async function openConnection(
     headers,
   });
 
-  console.log(
-    `${Colors.cyan("  [open]")} ${loggable(
-      callerId
-    )} has a socket open to talk to ${loggable(listenerId)}`
+  log.event(
+    "open",
+    datum(callerId),
+    "has a socket open to talk to",
+    datum(listenerId)
   );
 
   sockets.set(callerId, socket);
 
-  const caller = loggable(callerId, true);
-  const listener = loggable(listenerId, true);
+  const caller = datum(callerId, { shorten: true });
+  const listener = datum(listenerId, { shorten: true });
 
   const messages = popQueuedMessages({ from: listenerId, to: callerId });
-  console.log(
-    `${Colors.cyan("  [dequeue]")} ${loggable(
-      messages.length
-    )} queued messages being sent from ${listener} to ${caller}`
+
+  log.event(
+    "dequeue",
+    datum(messages.length),
+    "queued messages being sent from",
+    listener,
+    "to",
+    caller
   );
+
   for (const message of messages) {
     socket.send(message);
   }
@@ -87,11 +94,17 @@ async function openConnection(
 
     if (!listenerSocket) {
       queueMessage({ from: callerId, to: listenerId }, event.toString());
-      console.log(
-        `${Colors.cyan("  [queued]")} message ${loggable(
-          `"${event}"`
-        )} from ${caller} for ${listener} when they connect`
+      log.event(
+        "queued",
+        "message",
+        datum(event, { stringify: true }),
+        "from",
+        caller,
+        "for",
+        listener,
+        "when they connect"
       );
+
       return;
     }
 
@@ -101,22 +114,16 @@ async function openConnection(
       break;
     }
 
-    console.log(
-      `${Colors.cyan("  [message]")} ${caller} is sending ${loggable(
-        `"${event}"`
-      )} to listener ${listener}`
+    log.event(
+      "message",
+      caller,
+      "is sending",
+      datum(event, { stringify: true }),
+      "to listener",
+      listener
     );
     listenerSocket.send(event.toString());
   }
 
-  console.log(
-    `${Colors.cyan(
-      "  [close]"
-    )} Done with ${caller}'s connection to ${listener}`
-  );
-}
-
-function loggable(text: string | number, shorten = false) {
-  if (typeof text === "number" || !shorten) return Colors.gray(text.toString());
-  return Colors.gray(text.split("-")[0].slice(0, 4));
+  log.event("close", "Done with", caller, "connection to", listener);
 }
