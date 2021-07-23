@@ -6,6 +6,9 @@ export class SocketStore {
   issueId() {
     return v4.generate();
   }
+  ids() {
+    return Object.keys(this.sockets);
+  }
   closeAll() {
     return new Promise<void>((resolve) => {
       for (const id in this.sockets) {
