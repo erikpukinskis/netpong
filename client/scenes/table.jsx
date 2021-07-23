@@ -5,16 +5,6 @@ import { useSocket } from "../network";
 
 export function Table() {
   const { scene, render } = useScene();
-  const { send } = useSocket(console.log);
-
-  useEffect(function sendPings() {
-    function sendPing() {
-      console.log("ping?");
-      send("ping");
-      setTimeout(sendPing, 2000);
-    }
-    sendPing();
-  }, []);
 
   useEffect(
     function addSphere() {

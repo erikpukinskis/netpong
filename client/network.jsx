@@ -1,67 +1,38 @@
-import React, { useEffect, useState, useContext, useRef } from "react";
+import React, { useEffect, useState, useContext } from "react";
+import {
+  ProxyProtocol,
+  MatchmakerProtocol,
+} from "../lib/websocket-protocols.ts";
 
 const OpponentContext = React.createContext();
 
-export function useSocket(handleMessage) {
-  const { send, listen } = useContext(OpponentContext);
-  useEffect(() => {
-    if (!handleMessage) return;
-    listen(handleMessage);
-  }, []);
-  return { send };
-}
-
 export function OpponentProvider({ children }) {
-  const [socket, setSocket] = useState(new WebSocket("ws://localhost:8080/ws"));
+  const [socket, setSocket] = useState();
+  useEffect(async () => {
+    const response = await fetch("/identity", { method: "post" });
+    const { id } = await response.json();
+    console.log("Identifying as", id);
 
-  const sendQueue = useRef([]);
-  const listeners = useRef([]);
+    const match = new WebSocket(
+      `ws://${location.host}`,
+      MatchmakerProtocol(id)
+    );
 
-  function send(message) {
-    if ([socket.CLOSED, socket.CLOSING].includes(socket.readyState)) {
-      throw new Error("Socket was closed");
-    }
-
-    if (socket.readyState === socket.CONNECTING) {
-      sendQueue.current.push(message);
-      return;
-    }
-    socket.send(message);
-  }
-
-  function listen(handleMessage) {
-    listeners.current.push(handleMessage);
-  }
-
-  useEffect(
-    function openWebSocket() {
-      if (typeof socket === "boolean") return;
-      socket.onclose = () => {
-        setSocket(true);
-        const unsentCount = sendQueue.current.length;
-        if (unsentCount > 0) {
-          throw new Error(`Socket closed with ${unsentCount} unsent messages`);
-        }
-      };
-      socket.onopen = () => {
-        setSocket(socket);
-        for (const message in sendQueue.current) {
-          send(message);
-        }
-        sendQueue.current = [];
-      };
-      socket.onmessage = ({ data }) => {
-        for (const handleMessage of listeners.current) {
-          handleMessage(data);
-        }
-      };
-    },
-    [socket]
-  );
-
+    match.onmessage = ({ data: opponentId }) => {
+      const proxy = new WebSocket(
+        `ws://${location.host}`,
+        ProxyProtocol(id, opponentId)
+      );
+      setSocket(proxy);
+    };
+  }, []);
   return (
-    <OpponentContext.Provider value={{ send, listen }}>
+    <OpponentContext.Provider value={socket}>
       {children}
     </OpponentContext.Provider>
   );
+}
+
+export function useOpponentSocket() {
+  return useContext(OpponentContext);
 }

@@ -3,12 +3,13 @@ import { SocketStore } from "./socket-store.ts";
 import { serve } from "https://deno.land/std@0.100.0/http/server.ts";
 import { makeMatches } from "./matchmaker.ts";
 import { assertEquals } from "https://deno.land/std@0.100.0/testing/asserts.ts";
+import { v4 } from "https://deno.land/std@0.100.0/uuid/mod.ts";
 
 Deno.test("server can match up two players ", async () => {
   console.log();
   const clients = new SocketStore();
-  const chefId = clients.issueId();
-  const dinerId = clients.issueId();
+  const chefId = v4.generate();
+  const dinerId = v4.generate();
 
   const server = serve({ port: 8000 });
 

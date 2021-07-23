@@ -2,6 +2,8 @@ import proxy from "http2-proxy";
 
 /** @type {import("snowpack").SnowpackUserConfig } */
 export default {
+  workspaceRoot: "..",
+  alias: {},
   mount: {
     /* ... */
   },
@@ -12,14 +14,14 @@ export default {
     // SPA Fallback in development:
     {
       match: "routes",
-      src: ".*",
+      src: "/",
       dest: "/index.html",
     },
     // Websockets:
     {
-      src: "/ws",
+      src: "/",
       upgrade: (req, socket, head) => {
-        const defaultWSHandler = (err, req, socket, head) => {
+        const defaultWSHandler = (err, _, socket, __) => {
           if (err) {
             console.error("proxy error", err);
             socket.destroy();
@@ -36,6 +38,15 @@ export default {
           },
           defaultWSHandler
         );
+      },
+    },
+    {
+      src: "/identity",
+      dest: (req, res) => {
+        return proxy.web(req, res, {
+          hostname: "localhost",
+          port: 8000,
+        });
       },
     },
   ],

@@ -7,6 +7,8 @@ import { ServerRequest } from "https://deno.land/std@0.100.0/http/server.ts";
 import { acceptWebSocket } from "https://deno.land/std@0.100.0/ws/mod.ts";
 import { log, datum } from "./log.ts";
 
+// Todo: If a client closes the socket, remove them from the socket store
+
 export function makeMatches(request: ServerRequest, clients: SocketStore) {
   if (request.headers.get("upgrade") !== "websocket") return;
   if (!isMatchmakerProtocol(request.headers.get("sec-websocket-protocol")))

@@ -1,11 +1,7 @@
-import { v4 } from "https://deno.land/std@0.100.0/uuid/mod.ts";
 import { WebSocket } from "https://deno.land/std@0.100.0/ws/mod.ts";
 
 export class SocketStore {
   sockets: Record<string, WebSocket> = {};
-  issueId() {
-    return v4.generate();
-  }
   ids() {
     return Object.keys(this.sockets);
   }
