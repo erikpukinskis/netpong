@@ -15,3 +15,10 @@ cd client
 npm install
 npm start
 ```
+
+### Run tests
+
+```
+cd server
+deno test --allow-net
+```

@@ -1,18 +1,22 @@
 import {
   acceptWebSocket,
   isWebSocketCloseEvent,
-  WebSocket,
 } from "https://deno.land/std@0.100.0/ws/mod.ts";
 import { ServerRequest } from "https://deno.land/std@0.100.0/http/server.ts";
-import { v4 } from "https://deno.land/std@0.100.0/uuid/mod.ts";
 import * as Colors from "https://deno.land/std@0.100.0/fmt/colors.ts";
-import { parseProxyProtocol } from "../lib/websocket-protocols.ts";
+import {
+  isProxyProtocol,
+  parseProxyProtocol,
+} from "../lib/websocket-protocols.ts";
+import { SocketStore } from "./socket-store.ts";
+export { SocketStore } from "./socket-store.ts";
 
 export function proxyWebSockets(request: ServerRequest, clients: SocketStore) {
-  if (request.headers.get("upgrade") === "websocket") {
-    openConnection(request, clients);
-    return true;
-  }
+  if (request.headers.get("upgrade") !== "websocket") return;
+  const protocol = request.headers.get("sec-websocket-protocol");
+  if (!isProxyProtocol(protocol)) return;
+  openConnection(request, clients, protocol);
+  return true;
 }
 
 const queuedMessages: Record<string, Record<string, string[]>> = {};
@@ -41,10 +45,12 @@ function popQueuedMessages({ from, to }: { from: string; to: string }) {
   return messages;
 }
 
-async function openConnection(request: ServerRequest, sockets: SocketStore) {
-  const { callerId, listenerId } = parseProxyProtocol(
-    request.headers.get("sec-websocket-protocol")
-  );
+async function openConnection(
+  request: ServerRequest,
+  sockets: SocketStore,
+  protocol: string
+) {
+  const { callerId, listenerId } = parseProxyProtocol(protocol);
 
   const { conn, r: bufReader, w: bufWriter, headers } = request;
 
@@ -113,29 +119,4 @@ async function openConnection(request: ServerRequest, sockets: SocketStore) {
 function loggable(text: string | number, shorten = false) {
   if (typeof text === "number" || !shorten) return Colors.gray(text.toString());
   return Colors.gray(text.split("-")[0].slice(0, 4));
-}
-
-export class SocketStore {
-  sockets: Record<string, WebSocket> = {};
-  issueId() {
-    return v4.generate();
-  }
-  closeAll() {
-    return new Promise<void>((resolve) => {
-      for (const id in this.sockets) {
-        this.sockets[id].close();
-      }
-      this.sockets = {};
-      setTimeout(resolve);
-    });
-  }
-  set(id: string, socket: WebSocket) {
-    this.sockets[id] = socket;
-  }
-  get(id: string) {
-    return this.sockets[id];
-  }
-  close(id: string) {
-    delete this.sockets[id];
-  }
 }

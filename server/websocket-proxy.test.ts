@@ -18,7 +18,7 @@ Deno.test("server will proxy websocket from two clients", async () => {
   })();
 
   const diner = new WebSocket(
-    "ws://localhost:8000/proxy",
+    "ws://localhost:8000",
     ProxyProtocol(dinerId, chefId)
   );
 
@@ -28,7 +28,7 @@ Deno.test("server will proxy websocket from two clients", async () => {
 
   setTimeout(() => {
     const chef = new WebSocket(
-      "ws://localhost:8000/proxy",
+      "ws://localhost:8000",
       ProxyProtocol(chefId, dinerId)
     );
 

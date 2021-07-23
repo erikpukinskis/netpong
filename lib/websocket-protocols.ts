@@ -1,8 +1,22 @@
+const UUID_FORMAT = /^[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+$/;
+
+/**
+ * Proxy Protocol
+ **/
+
+const PROXY_PROTOCOL_FORMAT = /^proxy--(.+)--(.+)$/;
+
 export function ProxyProtocol(registerAsId: string, subscribeToId: string) {
   return `proxy--${registerAsId}--${subscribeToId}`;
 }
 
-const UUID_FORMAT = /^[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+$/;
+type ProxyProtocolString = `proxy--${string}--${string}`;
+
+export function isProxyProtocol(
+  protocol: string | null
+): protocol is ProxyProtocolString {
+  return typeof protocol === "string" && PROXY_PROTOCOL_FORMAT.test(protocol);
+}
 
 export function parseProxyProtocol(protocol: string | null) {
   if (typeof protocol !== "string") {
@@ -10,7 +24,7 @@ export function parseProxyProtocol(protocol: string | null) {
       `Cannot parse ${protocol} as ProxyProtocol because it is not a string. Try using ProxyProtocol() to generate the protocol.`
     );
   }
-  const match = protocol.match(/^proxy--(.+)--(.+)$/);
+  const match = protocol.match(PROXY_PROTOCOL_FORMAT);
 
   if (!match) {
     throw new Error(
